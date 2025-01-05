@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import axios from "axios";
 import { Client, IntentsBitField } from "discord.js";
+import { roomWhiteList, userWhiteList } from "./data.js";
 dotenv.config();
 
 const roomSupport = [process.env.ROOM_1, process.env.ROOM_TEST]; // rooms
@@ -19,21 +20,24 @@ client.on("ready", (cb) => {
 });
 
 client.on("messageCreate", async (msg) => {
+  // console.log(msg);
+
   // variable
   const content = msg.content;
   const messageContent = content.replace("?chat", "").trim();
   const isHelpRequest =
-    content.toLowerCase() === "?surbul" || content.toLowerCase() === "surbul";
+    content.toLowerCase() == "?surbul" || content.toLowerCase() == "surbul";
 
+  console.log(
+    content.toLowerCase() == "?surbul" || content.toLowerCase() == "surbul"
+  );
   // logic and validation
-  // validasi apakah pesan yang dikirim berawalan ?ai
-  if (!content.startsWith("?ai")) return;
 
   // validasi apakah chat dikirim oleh bot
   if (msg.author.bot) return;
 
   // validasi apakah bot digunakan di room yang terdaftar
-  if (!roomSupport.includes(msg.channelId)) {
+  if (!roomWhiteList.includes(parseInt(msg.channelId))) {
     if (msg.content.startsWith("?regis")) {
       return console.table({
         roomId: msg.channelId,
@@ -45,22 +49,35 @@ client.on("messageCreate", async (msg) => {
     return;
   }
 
+  // user regist
+  if (msg.content.startsWith("?user")) {
+    if (userWhiteList.includes(parseInt(msg.author.id))) {
+      return msg.reply(`${msg.author.globalName} sudah terdaftar`);
+    }
+    console.table(msg.author);
+    return msg.reply("Mohon ditunggu sebentar......");
+  }
+
   // memunculkan menu BOT
   if (isHelpRequest) {
+    console.log("test");
     return msg.reply(
       `Hallo ${msg.author.username}\n1. ?info -> Bot Info\n2. ?chat -> bertanya\nSilahkan pilih sesuai dengan kebutuhan, dan gunakan dengan bijak Yaaa....`
     );
   }
 
   // memunculkan informasi BOT
-  if (content.startsWith("?info")) {
+  if (content.startsWith("?surbul info")) {
     return msg.reply(
       `Owner: WidianaPutra\nVersi: 1\nDibuat: 26-Desember-2024\nTim: The Ngambul Gexs`
     );
   }
 
+  // validasi apakah pesan yang dikirim berawalan ?ai
+  if (!content.startsWith("?ai")) return;
+
   // validasi user
-  if (!usersWithAccess.includes(msg.author.username)) {
+  if (!userWhiteList.includes(parseInt(msg.author.id))) {
     return msg.reply(
       `Maaf, ${msg.author.username} tidak memiliki akses untuk menggunakan fitur ini`
     );
