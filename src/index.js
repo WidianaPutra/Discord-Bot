@@ -1,50 +1,38 @@
 import dotenv from "dotenv";
 import axios from "axios";
-import { Client, IntentsBitField } from "discord.js";
 import { roomWhiteList, userWhiteList } from "./data.js";
+import {
+  sendMessageToChannel,
+  client,
+  mentionUser,
+  deleteAllMessageByChannelId,
+} from "./utils.js";
 dotenv.config();
-
-const roomSupport = [process.env.ROOM_1, process.env.ROOM_TEST]; // rooms
-const usersWithAccess = [process.env.USER_1, process.env.USER_2]; // users
-
-const client = new Client({
-  intents: [
-    IntentsBitField.Flags.Guilds,
-    IntentsBitField.Flags.GuildMessages,
-    IntentsBitField.Flags.MessageContent,
-  ],
-});
 
 client.on("ready", (cb) => {
   console.log("Bot Ready");
 });
 
 client.on("messageCreate", async (msg) => {
-  // console.log(msg);
-
   // variable
   const content = msg.content;
   const messageContent = content.replace("?chat", "").trim();
   const isHelpRequest =
     content.toLowerCase() == "?surbul" || content.toLowerCase() == "surbul";
 
-  console.log(
-    content.toLowerCase() == "?surbul" || content.toLowerCase() == "surbul"
-  );
-  // logic and validation
-
   // validasi apakah chat dikirim oleh bot
   if (msg.author.bot) return;
+
+  // delete msg
 
   // validasi apakah bot digunakan di room yang terdaftar
   if (!roomWhiteList.includes(parseInt(msg.channelId))) {
     if (msg.content.startsWith("?regis")) {
-      return console.table({
-        roomId: msg.channelId,
-        username: msg.author.username,
-        name: msg.author.globalName,
-        msg: msg.content,
-      });
+      return sendMessageToChannel(
+        `Channel Register\nroomId: ${msg.channelId}\nusername: ${
+          msg.author.username
+        }\nname: ${msg.author.globalName}\n${mentionUser()}>`
+      );
     }
     return;
   }
@@ -54,13 +42,16 @@ client.on("messageCreate", async (msg) => {
     if (userWhiteList.includes(parseInt(msg.author.id))) {
       return msg.reply(`${msg.author.globalName} sudah terdaftar`);
     }
-    console.table(msg.author);
+    sendMessageToChannel(`User Register\n
+        user_id: ${msg.author.id} \nusername: ${msg.author.username}\nname: ${
+      msg.author.globalName
+    }\n${mentionUser()}>
+      `);
     return msg.reply("Mohon ditunggu sebentar......");
   }
 
   // memunculkan menu BOT
   if (isHelpRequest) {
-    console.log("test");
     return msg.reply(
       `Hallo ${msg.author.username}\n1. ?info -> Bot Info\n2. ?chat -> bertanya\nSilahkan pilih sesuai dengan kebutuhan, dan gunakan dengan bijak Yaaa....`
     );
